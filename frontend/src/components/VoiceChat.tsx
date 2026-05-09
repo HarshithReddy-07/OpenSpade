@@ -4,9 +4,9 @@ import { socket } from '../socket';
 export default function VoiceChat({ players, myId }: { players: any[], myId: string }) {
   const [muted, setMuted] = useState(true);
   const [micEnabled, setMicEnabled] = useState(false);
+  const [remoteStreams, setRemoteStreams] = useState<{ [id: string]: MediaStream }>({});
   const localStream = useRef<MediaStream | null>(null);
   const peers = useRef<{ [socketId: string]: RTCPeerConnection }>({});
-  const audioRefs = useRef<{ [socketId: string]: HTMLAudioElement }>({});
 
   useEffect(() => {
     // Setup signaling listeners
@@ -35,6 +35,13 @@ export default function VoiceChat({ players, myId }: { players: any[], myId: str
     };
   }, []);
 
+  // Watch for new players joining while mic is already enabled
+  useEffect(() => {
+    if (micEnabled) {
+      connectToPeers();
+    }
+  }, [players, micEnabled]);
+
   const createPeerConnection = (targetSocketId: string) => {
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
@@ -53,12 +60,18 @@ export default function VoiceChat({ players, myId }: { players: any[], myId: str
     };
 
     pc.ontrack = (event) => {
-      if (!audioRefs.current[targetSocketId]) {
-        const audio = new Audio();
-        audio.autoplay = true;
-        audioRefs.current[targetSocketId] = audio;
+      if (event.streams && event.streams[0]) {
+        setRemoteStreams(prev => ({
+          ...prev,
+          [targetSocketId]: event.streams[0]
+        }));
+      } else {
+        const stream = new MediaStream([event.track]);
+        setRemoteStreams(prev => ({
+          ...prev,
+          [targetSocketId]: stream
+        }));
       }
-      audioRefs.current[targetSocketId].srcObject = event.streams[0];
     };
 
     return pc;
@@ -82,6 +95,23 @@ export default function VoiceChat({ players, myId }: { players: any[], myId: str
       localStream.current = stream;
       setMicEnabled(true);
       setMuted(false);
+      
+      // Add new local tracks to existing peer connections and renegotiate
+      for (const [targetSocketId, pc] of Object.entries(peers.current)) {
+        // Prevent adding multiple times
+        const senders = pc.getSenders();
+        const alreadyAdded = senders.some(sender => stream.getTracks().includes(sender.track!));
+        
+        if (!alreadyAdded) {
+          stream.getTracks().forEach(track => {
+            pc.addTrack(track, stream);
+          });
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socket.emit('webrtc_signal', { targetSocketId, signal: offer });
+        }
+      }
+
       connectToPeers();
     } catch (e) {
       console.error("Microphone error", e);
@@ -109,6 +139,19 @@ export default function VoiceChat({ players, myId }: { players: any[], myId: str
           </button>
         </>
       )}
+      
+      {/* Hidden audio elements for remote streams */}
+      {Object.entries(remoteStreams).map(([id, stream]) => (
+        <audio 
+          key={id} 
+          autoPlay 
+          ref={(ref) => {
+            if (ref && ref.srcObject !== stream) {
+              ref.srcObject = stream;
+            }
+          }} 
+        />
+      ))}
     </div>
   );
 }
