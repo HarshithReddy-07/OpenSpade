@@ -9,6 +9,7 @@ export default function GameTable({ gameState, playerId, onLeave }: { gameState:
 
   const me = gameState.players.find((p: any) => p.id === playerId);
   const myTurn = gameState.players[gameState.currentTurnIndex]?.id === playerId;
+  const isHost = gameState.players[0]?.id === playerId;
   
   // Basic seating logic (bottom is me, others around)
   const myIndex = gameState.players.findIndex((p: any) => p.id === playerId);
@@ -61,8 +62,13 @@ export default function GameTable({ gameState, playerId, onLeave }: { gameState:
         </div>
         
         {/* Voice Chat controls */}
-        <div style={{ marginLeft: '16px' }}>
+        <div style={{ marginLeft: '16px', display: 'flex', gap: '16px', alignItems: 'center' }}>
           <VoiceChat players={gameState.players} myId={playerId} />
+          {isHost && gameState.phase !== 'GameOver' && (
+            <button className="btn-secondary" style={{ backgroundColor: '#ef4444', borderColor: '#ef4444', padding: '8px 12px' }} onClick={() => socket.emit('end_game_early')}>
+              End Game Early
+            </button>
+          )}
         </div>
       </div>
 

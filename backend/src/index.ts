@@ -76,6 +76,18 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
+  socket.on('end_game_early', () => {
+    const roomId = roomManager.getRoomIdForSocket(socket.id);
+    if (!roomId) return;
+    
+    const game = roomManager.getGame(roomId);
+    // Check if requester is the host
+    if (game && game.players[0]?.id === socket.id) {
+      game.phase = 'GameOver';
+      broadcastGameState(roomId);
+    }
+  });
+
   socket.on('place_bid', ({ bid }) => {
     const roomId = roomManager.getRoomIdForSocket(socket.id);
     if (!roomId) return;
