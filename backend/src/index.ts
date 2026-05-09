@@ -142,7 +142,9 @@ io.on('connection', (socket: Socket) => {
     console.log(`User disconnected: ${socket.id}`);
     const roomId = roomManager.getRoomIdForSocket(socket.id);
     if (roomId) {
-      roomManager.leaveRoom(socket.id);
+      roomManager.handleDisconnect(socket.id, (cleanedRoomId) => {
+        broadcastGameState(cleanedRoomId);
+      });
       broadcastGameState(roomId);
     }
   });

@@ -53,15 +53,47 @@ export class RoomManager {
       const player = game.players.find(p => p.id === socketId);
       if (player) {
         player.connected = false;
-        // Optionally, remove player fully if game hasn't started
-        if (game.phase === 'Lobby') {
-          game.removePlayer(socketId);
-        }
+        game.removePlayer(socketId);
       }
       
       // Cleanup empty rooms
-      if (game.players.every(p => !p.connected)) {
+      if (game.players.length === 0 || game.players.every(p => !p.connected)) {
          this.games.delete(roomId);
+      }
+    }
+    this.socketToRoom.delete(socketId);
+  }
+
+  handleDisconnect(socketId: string, onCleanup: (roomId: string) => void) {
+    const roomId = this.socketToRoom.get(socketId);
+    if (!roomId) return;
+
+    const game = this.games.get(roomId);
+    if (game) {
+      const player = game.players.find(p => p.id === socketId);
+      if (player) {
+        player.connected = false;
+        
+        // 5-second grace period to reconnect before kicking from lobby / deleting empty rooms
+        setTimeout(() => {
+          const currentRoom = this.games.get(roomId);
+          if (currentRoom) {
+            const p = currentRoom.players.find(x => x.name === player.name);
+            if (p && !p.connected) {
+              let changed = false;
+              if (currentRoom.phase === 'Lobby') {
+                currentRoom.removePlayer(p.id);
+                changed = true;
+              }
+              if (currentRoom.players.length === 0 || currentRoom.players.every(x => !x.connected)) {
+                this.games.delete(roomId);
+              }
+              if (changed) {
+                onCleanup(roomId);
+              }
+            }
+          }
+        }, 5000);
       }
     }
     this.socketToRoom.delete(socketId);
