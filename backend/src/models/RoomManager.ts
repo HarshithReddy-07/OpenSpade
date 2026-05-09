@@ -26,7 +26,7 @@ export class RoomManager {
   joinRoom(roomId: string, socketId: string, playerName: string): Game {
     let game = this.games.get(roomId);
     if (!game) {
-      game = this.createRoom(roomId, 'Solo'); // Default to solo if room doesn't exist, though typically frontend explicitly creates
+      throw new Error("Room does not exist");
     }
     
     // Check if player is already in room (reconnection)

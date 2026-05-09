@@ -286,6 +286,7 @@ export class Game {
       id: this.id,
       mode: this.mode,
       phase: this.phase,
+      maxPlayers: this.maxPlayers,
       totalRounds: this.totalRounds,
       currentRoundIndex: this.currentRoundIndex,
       allowNil: this.allowNil,

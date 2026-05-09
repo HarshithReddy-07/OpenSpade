@@ -12,11 +12,15 @@ export default function Lobby({ gameState, playerId }: { gameState: any; playerI
   const handleCreate = () => {
     if (!roomId || !playerName) return;
     socket.emit('create_room', { roomId, mode, playerName, maxPlayers, totalRounds, allowNil });
+    sessionStorage.setItem('openSpadeRoom', roomId);
+    sessionStorage.setItem('openSpadePlayer', playerName);
   };
 
   const handleJoin = () => {
     if (!roomId || !playerName) return;
     socket.emit('join_room', { roomId, playerName });
+    sessionStorage.setItem('openSpadeRoom', roomId);
+    sessionStorage.setItem('openSpadePlayer', playerName);
   };
 
   const handleStart = () => {
@@ -35,7 +39,7 @@ export default function Lobby({ gameState, playerId }: { gameState: any; playerI
         <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>Mode: {gameState.mode}</p>
         
         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
-          <h3 style={{ marginBottom: '12px' }}>Players ({gameState.players.length}/{maxPlayers})</h3>
+          <h3 style={{ marginBottom: '12px' }}>Players ({gameState.players.length}/{gameState.maxPlayers})</h3>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {gameState.players.map((p: any) => (
               <li key={p.id} style={{ padding: '8px', borderBottom: '1px solid var(--glass-border)' }}>
@@ -81,7 +85,7 @@ export default function Lobby({ gameState, playerId }: { gameState: any; playerI
           className="input-field" 
           placeholder="e.g. ROOM123" 
           value={roomId} 
-          onChange={(e) => setRoomId(e.target.value.toUpperCase())} 
+          onChange={(e) => setRoomId(e.target.value.toUpperCase().replace(/\s/g, ''))} 
         />
       </div>
 

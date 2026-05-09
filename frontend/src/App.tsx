@@ -15,6 +15,13 @@ function App() {
 
     socket.on('connect', () => {
       setPlayerId(socket.id!);
+      
+      // Auto-reconnect if session exists
+      const savedRoom = sessionStorage.getItem('openSpadeRoom');
+      const savedPlayer = sessionStorage.getItem('openSpadePlayer');
+      if (savedRoom && savedPlayer) {
+        socket.emit('join_room', { roomId: savedRoom, playerName: savedPlayer });
+      }
     });
 
     socket.on('game_state', (state: GameState) => {
@@ -24,6 +31,10 @@ function App() {
 
     socket.on('error', (msg: string) => {
       setError(msg);
+      if (msg === 'Room does not exist') {
+        sessionStorage.removeItem('openSpadeRoom');
+        sessionStorage.removeItem('openSpadePlayer');
+      }
     });
 
     return () => {
@@ -51,6 +62,8 @@ function App() {
         <Lobby gameState={gameState} playerId={playerId} />
       ) : (
         <GameTable gameState={gameState} playerId={playerId} onLeave={() => {
+          sessionStorage.removeItem('openSpadeRoom');
+          sessionStorage.removeItem('openSpadePlayer');
           socket.emit('leave_room');
           setGameState(null);
         }} />
