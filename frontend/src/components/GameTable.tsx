@@ -35,14 +35,14 @@ export default function GameTable({ gameState, playerId, onLeave }: { gameState:
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
       {/* Top Bar: Scores & Trump info */}
-      <div className="glass-panel" style={{ padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="glass-panel" style={{ padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: '32px' }}>Round {gameState.currentRoundIndex} of {gameState.totalRounds} <span style={{fontSize: '20px', color: 'var(--text-muted)'}}>({gameState.phase})</span></h2>
           <div style={{ color: 'var(--text-muted)', fontSize: '20px' }}>Trump Suit: {gameState.trumpSuit ? gameState.trumpSuit.toUpperCase() : 'None'}</div>
         </div>
         
         {/* Scoreboard inline */}
-        <div style={{ display: 'flex', gap: '32px', fontSize: '20px' }}>
+        <div style={{ display: 'flex', gap: '16px', fontSize: '20px', flexWrap: 'wrap', justifyContent: 'center' }}>
           {gameState.mode === 'Solo' ? (
             gameState.players.map((p: any) => (
               <div key={p.id} style={{ textAlign: 'center' }}>
@@ -62,7 +62,7 @@ export default function GameTable({ gameState, playerId, onLeave }: { gameState:
         </div>
         
         {/* Voice Chat controls */}
-        <div style={{ marginLeft: '16px', display: 'flex', gap: '16px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
           <VoiceChat players={gameState.players} myId={playerId} />
           {isHost && gameState.phase !== 'GameOver' && (
             <button className="btn-secondary" style={{ backgroundColor: '#ef4444', borderColor: '#ef4444', padding: '8px 12px' }} onClick={() => socket.emit('end_game_early')}>
@@ -84,7 +84,7 @@ export default function GameTable({ gameState, playerId, onLeave }: { gameState:
         )}
 
         {/* Center Trick Area */}
-        <div style={{ position: 'relative', width: '450px', height: '450px', borderRadius: '50%', background: 'rgba(0,0,0,0.1)', border: '2px dashed var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: '450px', aspectRatio: '1 / 1', borderRadius: '50%', background: 'rgba(0,0,0,0.1)', border: '2px dashed var(--glass-border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {gameState.currentTrick.cards.map((play: any, idx: number) => {
             // Very simple center positioning based on index
             const angle = (idx * 360) / gameState.players.length;
