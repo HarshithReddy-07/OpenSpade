@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { socket } from './socket';
 import Lobby from './components/Lobby';
 import GameTable from './components/GameTable';
@@ -68,6 +69,7 @@ function App() {
           setGameState(null);
         }} />
       )}
+      <Analytics />
     </div>
   );
 }
